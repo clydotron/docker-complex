@@ -1,0 +1,21 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  -docker build -t clydotron/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true clydotron/react-test npm test
+after_success:
+  - docker build -t clydotron/multi-client ./client
+  - docker build -t clydotron/multi-nginx ./nginx
+  - docker build -t clydotron/multi-server ./server
+  - docker build -t clydotron/multi-worker ./worker
+  # log into the DockerCLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker
+  - docker push clydotron/multi-client
+  - docker push clydotron/multi-nginx
+  - docker push clydotron/multi-server
+  - docker push clydotron/multi-worker
